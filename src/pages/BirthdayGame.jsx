@@ -8,7 +8,6 @@ import BattleHUD from "@/components/battle/BattleHUD";
 import BattleActions from "@/components/battle/BattleActions";
 import BattleLog from "@/components/battle/BattleLog";
 import QTEOverlay from "@/components/battle/QTEOverlay";
-import BattleSummary from "@/components/battle/BattleSummary";
 import { PLAYER_TEMPLATE, ENEMIES } from "@/lib/battleData";
 import {
   initBattle,
@@ -23,15 +22,6 @@ import {
   getAoeTargets,
   getReachableTiles,
 } from "@/lib/battleEngine";
-
-const FALLBACK_STATS = {
-  totalDamageDealt: 0,
-  qtesSuccess: 0,
-  qtesTotal: 0,
-  porrosUsed: 0,
-  ultimatesUsed: 0,
-  turns: 0,
-};
 
 const FINAL_BOSS_TEMPLATE = ENEMIES.find((enemy) => enemy.id === "maestro_doblaje") ?? ENEMIES[0];
 const FINAL_BOSS_HP = 120;
@@ -187,8 +177,7 @@ function BattleScreen({ battle, enemy, selectedAbility, handlers }) {
   );
 }
 
-function EndScreen({ type, battle, onRestart }) {
-  const stats = battle?.stats ?? FALLBACK_STATS;
+function EndScreen({ type, onRestart, onBackToTitle }) {
   const isWin = type === "win";
 
   return (
@@ -203,7 +192,7 @@ function EndScreen({ type, battle, onRestart }) {
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: "spring", duration: 0.45 }}
-        className="relative flex flex-col items-center text-center py-6 px-4"
+        className="relative flex flex-col items-center text-center py-8 px-5"
       >
         <div
           className={`absolute inset-0 pointer-events-none opacity-20 blur-3xl ${
@@ -212,41 +201,49 @@ function EndScreen({ type, battle, onRestart }) {
         />
 
         <motion.div
-          animate={isWin ? { rotate: [0, 15, -15, 0], y: [0, -12, 0] } : { y: [0, 4, 0] }}
+          animate={isWin ? { rotate: [0, 10, -10, 0], y: [0, -10, 0] } : { y: [0, 4, 0] }}
           transition={{ repeat: Infinity, duration: isWin ? 1.5 : 3 }}
           className="relative z-10"
         >
-          <SouthParkCharacter emotion={isWin ? "happy" : "dead"} size={isWin ? 110 : 100} />
+          <SouthParkCharacter emotion={isWin ? "happy" : "dead"} size={110} />
         </motion.div>
 
         <h2
-          className={`font-bangers mt-4 ${isWin ? "text-4xl text-yellow-300" : "text-3xl text-red-500"}`}
+          className={`font-bangers mt-5 ${isWin ? "text-4xl text-yellow-300" : "text-3xl text-red-500"}`}
           style={{ textShadow: "3px 3px 0 #000" }}
         >
-          {isWin ? "¡HAS GANADO!" : "¡HAS PERDIDO!"}
+          {isWin ? "¡FELICIDADES!" : "¡HAS PERDIDO!"}
         </h2>
 
         <p
-          className={`font-bangers mt-3 ${isWin ? "text-2xl text-yellow-400" : "text-xl text-red-400 mt-2"}`}
+          className={`font-bangers mt-3 ${isWin ? "text-2xl text-yellow-400" : "text-xl text-red-400"}`}
           style={{ textShadow: "2px 2px 0 #000" }}
         >
-          {isWin ? "¡Feliz Cumpleaños Cerro! 🎂" : "El doblaje español te derrotó"}
+          {isWin ? "Has derrotado al doblaje" : "El doblaje te ha vencido"}
         </p>
 
-        <p className={`font-comic max-w-xs leading-relaxed mt-3 ${isWin ? "text-white/80 text-sm" : "text-white/70 text-sm"}`}>
-          {isWin
-            ? "Venciste al Maestro del Doblaje y sus acentos forzados. ¡Eres una leyenda!"
-            : "El Maestro del Doblaje ganó. Sus acentos forzados y respiraciones innecesarias fueron demasiado."}
-        </p>
+        <div className="mt-6 relative z-10">
+          {isWin ? (
+            <motion.button
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={onBackToTitle}
+              className="font-bangers text-xl tracking-wide bg-yellow-400 hover:bg-yellow-300 text-black px-6 py-3 rounded-2xl border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,0.45)]"
+            >
+              Volver al inicio
+            </motion.button>
+          ) : (
+            <motion.button
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={onRestart}
+              className="font-bangers text-xl tracking-wide bg-red-500 hover:bg-red-400 text-white px-6 py-3 rounded-2xl border-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,0.45)]"
+            >
+              Volver a intentar la pelea
+            </motion.button>
+          )}
+        </div>
       </motion.div>
-
-      <div className="px-3 pb-3">
-        <BattleSummary
-          stats={stats}
-          onContinue={onRestart}
-          label={isWin ? "🎉 Volver al inicio" : "🔄 REVANCHA"}
-        />
-      </div>
     </div>
   );
 }
@@ -258,26 +255,15 @@ export default function BirthdayGame() {
   const [selectedAbility, setSelectedAbility] = useState(null);
 
   const enemyTimerRef = useRef(null);
-  const finishTimerRef = useRef(null);
   const musicStartedRef = useRef(false);
 
   const { playSound, startBgMusic, stopBgMusic } = useSoundEffects();
 
-  const endState = useMemo(() => {
-    if (!battle) return null;
-    if (battle.phase === "win") return "win";
-    if (battle.phase === "lose") return "lose";
-    return null;
-  }, [battle]);
 
   const clearAllTimers = useCallback(() => {
     if (enemyTimerRef.current) {
       clearTimeout(enemyTimerRef.current);
       enemyTimerRef.current = null;
-    }
-    if (finishTimerRef.current) {
-      clearTimeout(finishTimerRef.current);
-      finishTimerRef.current = null;
     }
   }, []);
 
@@ -295,7 +281,21 @@ export default function BirthdayGame() {
     }
   }, [clearAllTimers, startBgMusic]);
 
-  const restart = useCallback(() => {
+  const restartBattle = useCallback(() => {
+    clearAllTimers();
+    const boss = createFinalBoss();
+    setCurrentBoss(boss);
+    setBattle(initBattle(boss));
+    setSelectedAbility(null);
+    setScreen("battle");
+
+    if (!musicStartedRef.current) {
+      startBgMusic();
+      musicStartedRef.current = true;
+    }
+  }, [clearAllTimers, startBgMusic]);
+
+  const backToTitle = useCallback(() => {
     clearAllTimers();
     setSelectedAbility(null);
     setBattle(null);
@@ -339,15 +339,7 @@ export default function BirthdayGame() {
       stopBgMusic();
       musicStartedRef.current = false;
       playSound(battle.phase === "win" ? "victory" : "defeat", 0.7);
-      finishTimerRef.current = setTimeout(() => {
-        setScreen(battle.phase);
-      }, 120);
-      return () => {
-        if (finishTimerRef.current) {
-          clearTimeout(finishTimerRef.current);
-          finishTimerRef.current = null;
-        }
-      };
+      return undefined;
     }
 
     if (enemyTimerRef.current) {
@@ -418,7 +410,7 @@ export default function BirthdayGame() {
           </motion.div>
         )}
 
-        {screen === "battle" && battle && currentBoss && !endState && (
+        {screen === "battle" && battle && currentBoss && battle.phase !== "win" && battle.phase !== "lose" && (
           <motion.div
             key="battle"
             initial={{ opacity: 0 }}
@@ -439,7 +431,7 @@ export default function BirthdayGame() {
           </motion.div>
         )}
 
-        {screen === "win" && battle && currentBoss && (
+        {screen === "battle" && battle && currentBoss && battle.phase === "win" && (
           <motion.div
             key="win"
             initial={{ opacity: 0 }}
@@ -447,11 +439,11 @@ export default function BirthdayGame() {
             exit={{ opacity: 0 }}
             className="flex-1 flex flex-col justify-center px-2 py-4 md:px-3 max-w-lg mx-auto w-full"
           >
-            <EndScreen type="win" battle={battle} onRestart={restart} />
+            <EndScreen type="win" onRestart={restartBattle} onBackToTitle={backToTitle} />
           </motion.div>
         )}
 
-        {screen === "lose" && battle && currentBoss && (
+        {screen === "battle" && battle && currentBoss && battle.phase === "lose" && (
           <motion.div
             key="lose"
             initial={{ opacity: 0 }}
@@ -459,7 +451,7 @@ export default function BirthdayGame() {
             exit={{ opacity: 0 }}
             className="flex-1 flex flex-col justify-center px-2 py-4 md:px-3 max-w-lg mx-auto w-full"
           >
-            <EndScreen type="lose" battle={battle} onRestart={restart} />
+            <EndScreen type="lose" onRestart={restartBattle} onBackToTitle={backToTitle} />
           </motion.div>
         )}
       </AnimatePresence>

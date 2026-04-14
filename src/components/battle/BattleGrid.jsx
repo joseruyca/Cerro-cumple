@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GRID_ROWS, GRID_COLS, posToKey, dist, STATUS_LABELS } from "@/lib/battleData";
+import { GRID_ROWS, GRID_COLS, posToKey, STATUS_LABELS } from "@/lib/battleData";
 import SouthParkCharacter from "@/components/game/SouthParkCharacter";
 
 function StatusBadges({ statuses }) {
@@ -10,7 +10,7 @@ function StatusBadges({ statuses }) {
       {statuses.map((s, i) => {
         const info = STATUS_LABELS[s.type];
         return (
-          <span key={i} className={`text-xs font-bangers ${info?.color} bg-black/60 px-1 rounded`} title={info?.label}>
+          <span key={i} className={`text-[10px] font-bangers ${info?.color} bg-black/60 px-1 rounded`} title={info?.label}>
             {info?.icon}{s.turns}
           </span>
         );
@@ -21,7 +21,7 @@ function StatusBadges({ statuses }) {
 
 export default function BattleGrid({
   playerPos, enemyPos, playerEmotion, enemy,
-  isPlayerTurn, reachableTiles, abilityTargets,
+  reachableTiles, abilityTargets,
   selectedAbility, onTileClick, phase,
   playerStatuses, enemyStatuses,
   floats, onFloatEnd,
@@ -35,7 +35,6 @@ export default function BattleGrid({
 
   return (
     <div className="w-full relative select-none">
-      {/* Damage floaters */}
       <div className="absolute inset-0 pointer-events-none z-30">
         <AnimatePresence>
           {floats.map((f) => {
@@ -53,10 +52,10 @@ export default function BattleGrid({
             return (
               <motion.div
                 key={f.id}
-                className={`absolute font-bangers text-xl pointer-events-none ${color} -translate-x-1/2`}
+                className={`absolute font-bangers text-lg pointer-events-none ${color} -translate-x-1/2`}
                 style={{ left, top, textShadow: "2px 2px 0 #000" }}
                 initial={{ opacity: 1, y: 0, scale: 1 }}
-                animate={{ opacity: 0, y: -50, scale: 1.4 }}
+                animate={{ opacity: 0, y: -38, scale: 1.25 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.85 }}
                 onAnimationComplete={() => onFloatEnd(f.id)}
@@ -68,9 +67,8 @@ export default function BattleGrid({
         </AnimatePresence>
       </div>
 
-      {/* Grid */}
       <div
-        className="grid gap-0.5 md:gap-1 p-1"
+        className="grid gap-0.5 p-1"
         style={{ gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`, gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)` }}
       >
         {Array.from({ length: GRID_ROWS }).map((_, r) =>
@@ -97,9 +95,8 @@ export default function BattleGrid({
                     isReachable ? "border-blue-400/60 bg-blue-400/10 cursor-pointer" :
                     "border-white/10 bg-white/[0.03]"}
                 `}
-                style={{ height: "clamp(55px, 10vw, 90px)" }}
+                style={{ height: "clamp(46px, 8.4vw, 72px)" }}
               >
-                {/* Player */}
                 {isPlayer && (
                   <motion.div
                     layout
@@ -108,11 +105,10 @@ export default function BattleGrid({
                     className="flex flex-col items-center gap-0 pb-0.5"
                   >
                     <StatusBadges statuses={playerStatuses} />
-                    <SouthParkCharacter emotion={playerEmotion} size={40} />
+                    <SouthParkCharacter emotion={playerEmotion} size={34} />
                   </motion.div>
                 )}
 
-                {/* Enemy */}
                 {isEnemy && (
                   <motion.div
                     layout
@@ -122,33 +118,30 @@ export default function BattleGrid({
                   >
                     <StatusBadges statuses={enemyStatuses} />
                     <motion.span
-                      className="text-2xl md:text-3xl leading-none"
+                      className="text-xl md:text-2xl leading-none"
                       animate={phase === "enemy" ? { y: [0, -4, 0] } : {}}
                       transition={{ repeat: Infinity, duration: 0.6 }}
                     >{enemy.icon}</motion.span>
                   </motion.div>
                 )}
 
-                {/* Reachable indicator */}
                 {isReachable && !isPlayer && !isEnemy && (
                   <motion.div
-                    className="w-2.5 h-2.5 rounded-full bg-blue-400/60 mb-1"
+                    className="w-2 h-2 rounded-full bg-blue-400/60 mb-1"
                     animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }}
                     transition={{ repeat: Infinity, duration: 1 }}
                   />
                 )}
 
-                {/* AOE target indicator */}
                 {isAoeTarget && !isPlayer && !isEnemy && (
                   <motion.div
-                    className="w-3 h-3 rounded-full bg-orange-400/70 mb-1"
+                    className="w-2.5 h-2.5 rounded-full bg-orange-400/70 mb-1"
                     animate={{ scale: [1, 1.4, 1] }}
                     transition={{ repeat: Infinity, duration: 0.5 }}
                   />
                 )}
 
-                {/* Grid coord */}
-                <span className="absolute top-0.5 left-1 text-white/15 font-comic" style={{ fontSize: 8 }}>
+                <span className="absolute top-0.5 left-1 text-white/15 font-comic text-[7px]">
                   {r + 1},{c + 1}
                 </span>
               </motion.div>

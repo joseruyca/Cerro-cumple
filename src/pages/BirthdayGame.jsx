@@ -25,6 +25,7 @@ import {
 
 const FINAL_BOSS_TEMPLATE = ENEMIES.find((enemy) => enemy.id === "maestro_doblaje") ?? ENEMIES[0];
 const FINAL_BOSS_HP = 120;
+const WIN_VIDEO_EMBED = "https://www.youtube.com/embed/vTGpwtnPD6k?rel=0";
 
 function createFinalBoss() {
   return {
@@ -35,7 +36,7 @@ function createFinalBoss() {
 
 function TitleScreen({ onStart }) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4 py-8 relative overflow-hidden">
+    <div className="flex flex-col items-center justify-center h-[100dvh] px-4 py-6 relative overflow-hidden">
       {["🎂", "💀", "🍺", "🎈", "💥", "🌿", "🔪", "🎉"].map((emoji, index) => (
         <motion.span
           key={index}
@@ -106,7 +107,7 @@ function BattleScreen({ battle, enemy, selectedAbility, handlers }) {
         : "happy";
 
   return (
-    <div className="flex flex-col gap-2 w-full">
+    <div className="flex flex-col gap-2 w-full flex-1 min-h-0">
       <BattleHUD
         playerHp={battle.playerHp}
         enemyHp={battle.enemyHp}
@@ -117,10 +118,10 @@ function BattleScreen({ battle, enemy, selectedAbility, handlers }) {
         turn_number={battle.turn_number}
       />
 
-      <div className={`relative w-full rounded-2xl border-4 border-black bg-gradient-to-b ${enemy.bgColor} overflow-hidden`}>
+      <div className={`relative w-full rounded-2xl border-4 border-black bg-gradient-to-b ${enemy.bgColor} overflow-hidden shrink-0`}>
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none z-0" />
 
-        <div className="relative z-10 pt-6 pb-1 px-1">
+        <div className="relative z-10 pt-3 pb-1 px-1">
           <BattleGrid
             playerPos={playerPos}
             enemyPos={enemyPos}
@@ -163,11 +164,11 @@ function BattleScreen({ battle, enemy, selectedAbility, handlers }) {
       )}
 
       {phase === "enemy" && (
-        <div className="text-center py-2">
+        <div className="text-center py-1 shrink-0">
           <motion.p
             animate={{ opacity: [1, 0.3, 1] }}
             transition={{ repeat: Infinity, duration: 0.7 }}
-            className="font-bangers text-red-400 text-base tracking-wide"
+            className="font-bangers text-red-400 text-sm tracking-wide"
           >
             {enemy.icon} {enemy.name} está pensando...
           </motion.p>
@@ -181,24 +182,48 @@ function EndScreen({ type, onRestart, onBackToTitle }) {
   const isWin = type === "win";
 
   return (
-    <div className="flex-1 flex items-center justify-center px-3 py-6">
-      <div className={`w-full max-w-lg rounded-2xl border-4 p-6 text-center shadow-[8px_8px_0_0_rgba(0,0,0,0.35)] ${isWin ? "border-yellow-400 bg-gradient-to-b from-yellow-300 to-orange-300" : "border-red-600 bg-gradient-to-b from-red-400 to-red-600"}`}>
+    <div className="h-[100dvh] w-full flex items-center justify-center px-3 py-4 overflow-hidden">
+      <div className={`w-full max-w-lg rounded-2xl border-4 p-4 md:p-5 text-center shadow-[8px_8px_0_0_rgba(0,0,0,0.35)] ${isWin ? "border-yellow-400 bg-gradient-to-b from-yellow-300 to-orange-300" : "border-red-600 bg-gradient-to-b from-red-400 to-red-600"}`}>
         <h2 className="font-bangers text-4xl text-black" style={{ textShadow: "2px 2px 0 rgba(255,255,255,0.35)" }}>
           {isWin ? "¡Felicidades!" : "¡Has perdido!"}
         </h2>
 
-        <p className="mt-4 font-bangers text-2xl text-black">
+        <p className="mt-3 font-bangers text-2xl text-black">
           {isWin ? "Has derrotado al doblaje" : "El doblaje te ha vencido"}
         </p>
 
-        <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
+        {isWin ? (
+          <div className="mt-4 rounded-2xl border-4 border-black overflow-hidden shadow-[4px_4px_0_0_rgba(0,0,0,0.25)] bg-black">
+            <div className="aspect-[9/16] max-h-[48dvh] w-full">
+              <iframe
+                className="h-full w-full"
+                src={WIN_VIDEO_EMBED}
+                title="Vídeo final de victoria"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        ) : null}
+
+        <div className="mt-5 flex items-center justify-center gap-3 flex-wrap">
           {isWin ? (
-            <button
-              onClick={onBackToTitle}
-              className="font-bangers text-xl tracking-wide bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-3 rounded-2xl border-4 border-black"
-            >
-              Volver al inicio
-            </button>
+            <>
+              <button
+                onClick={onRestart}
+                className="font-bangers text-xl tracking-wide bg-black hover:bg-zinc-800 text-white px-6 py-3 rounded-2xl border-4 border-white"
+              >
+                Repetir pelea
+              </button>
+              <button
+                onClick={onBackToTitle}
+                className="font-bangers text-xl tracking-wide bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-3 rounded-2xl border-4 border-black"
+              >
+                Volver al inicio
+              </button>
+            </>
           ) : (
             <button
               onClick={onRestart}
@@ -375,11 +400,11 @@ export default function BirthdayGame() {
   const isLose = screen === "battle" && battle && currentBoss && battle.phase === "lose";
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-gradient-to-b from-cyan-400 to-blue-500">
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-gradient-to-b from-cyan-400 to-blue-500">
       {screen === "title" && <TitleScreen onStart={startGame} />}
 
       {isBattleActive && (
-        <div className="flex-1 flex flex-col px-2 py-2 md:px-3 md:py-3 max-w-lg mx-auto w-full">
+        <div className="h-[100dvh] flex flex-col px-2 py-2 md:px-3 md:py-3 max-w-lg mx-auto w-full overflow-hidden">
           <div className="flex items-center justify-between mb-1.5 shrink-0">
             <h2 className="font-bangers text-base text-yellow-400" style={{ textShadow: "2px 2px 0 #000" }}>
               🎂 Cumpleaños de Cerro
@@ -389,7 +414,7 @@ export default function BirthdayGame() {
 
           <BattleScreen battle={battle} enemy={currentBoss} selectedAbility={selectedAbility} handlers={handlers} />
 
-          <p className="text-center font-comic text-xs text-white/15 mt-2 shrink-0">South Park Tactics™</p>
+          <p className="text-center font-comic text-[10px] text-white/15 mt-1 shrink-0">South Park Tactics™</p>
         </div>
       )}
 
